@@ -133,6 +133,22 @@ class ReverseNimpliesOperator(BinaryOperator):
         return not (a or not b)
 
 
+class EqualityOperator(BinaryOperator):
+    def __init__(self, l, r):
+        super().__init__('=', l, r)
+
+    def op(self, a, b):
+        return a == b
+
+
+class NonEqualityOperator(BinaryOperator):
+    def __init__(self, l, r):
+        super().__init__('≠', l, r)
+
+    def op(self, a, b):
+        return a != b
+
+
 class Negation(Operator):
     def __init__(self, data):
         self.data = data

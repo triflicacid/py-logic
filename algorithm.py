@@ -35,7 +35,7 @@ def truthtable(formula: Formula) -> list[(dict[str, bool], bool)]:
     return table
 
 
-def print_truthtable(formula: Formula, true_symbol = "T", false_symbol = "F"):
+def print_truthtable(formula: Formula, true_symbol = "T", false_symbol = "F", result_symbol = "φ"):
     """ Same as truthtable(), but print table """
     # Generate the truth table
     table = truthtable(formula)
@@ -50,7 +50,7 @@ def print_truthtable(formula: Formula, true_symbol = "T", false_symbol = "F"):
     for symbol in table[0][0]:
         print('| ' + symbol.center(max_tf_len, ' ') + ' ', end='')
 
-    print('|| ' + 'φ'.center(max_tf_len) + ' |')
+    print('|| ' + result_symbol.center(max_tf_len) + ' |')
 
     # Print seperator line
     for symbol in table[0][0]:
@@ -62,7 +62,7 @@ def print_truthtable(formula: Formula, true_symbol = "T", false_symbol = "F"):
         for symbol in symbols:
             print('| ' + str(true_symbol if symbols[symbol] else false_symbol).center(max(max_tf_len, len(symbol)), ' ') + ' ', end='')
 
-        print('|| ' + str(true_symbol if result else false_symbol).center(max_tf_len) + ' |')
+        print('|| ' + str(true_symbol if result else false_symbol).center(max(max_tf_len, len(result_symbol))) + ' |')
 
 
 def rank(formula: Formula) -> int:

@@ -6,7 +6,10 @@ from typing import Any
 # Map of binary operators; string => (Operator, Not Variant)
 binary_operators = {
     '&': (AndOperator, NandOperator), '.': (AndOperator, NandOperator),
-    '|': (OrOperator, NorOperator), '+': (OrOperator, NorOperator)
+    '|': (OrOperator, NorOperator), '+': (OrOperator, NorOperator),
+    '->': (ImpliesOperator, NimpliesOperator),
+    '<-': (ReverseImpliesOperator, ReverseNimpliesOperator),
+    '=': (EqualityOperator, NonEqualityOperator)
 }
 
 
@@ -22,12 +25,12 @@ def parse(string: str) -> (bool, Formula | str):
         while index < len(string) and string[index] == ' ':
             index += 1
 
-    def parse_negation() -> int:
+    def parse_negation(limit: int = None) -> int:
         """ Return number of negations encountered """
         nonlocal index
         count = 0
 
-        while string[index] in ('!', '¬'):
+        while (limit is not None and count < limit) and string[index] in ('!', '¬'):
             count += 1
             index += 1
 
@@ -44,12 +47,12 @@ def parse(string: str) -> (bool, Formula | str):
         literal = None
 
         # Literal: top
-        if string in (Top.symbol, 'T'):
+        if string[index] in (Top.symbol, 'T'):
             index += 1
             literal = Top()
 
         # Literal: bottom
-        elif string in (Bottom.symbol, 'F'):
+        elif string[index] in (Bottom.symbol, 'F'):
             index += 1
             literal = Bottom()
 
@@ -70,12 +73,12 @@ def parse(string: str) -> (bool, Formula | str):
         """ Parse operator; return class constructor """
         nonlocal index
 
-        negated = parse_negation()
+        negations = parse_negation(1)
 
         for op in binary_operators:
             if string[index:].startswith(op):
                 index += len(op)
-                return binary_operators[op][1 if negated else 0]
+                return binary_operators[op][1 if negations else 0]
 
         return None
 
@@ -186,7 +189,7 @@ def parse(string: str) -> (bool, Formula | str):
         # Operator
         op = parse_operator()
         if op is None:
-            return True, f"Index {index}: expected operator"
+            return False, f"Index {index}: expected operator, got '{string[index:index+5]}'"
 
         eat_whitespace()
 
