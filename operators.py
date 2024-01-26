@@ -5,6 +5,34 @@ class Operator(Formula):
     pass
 
 
+class GeneralisedOperator(Operator):
+    def __init__(self, formulae: list[Formula], open: str, close: str):
+        self.formulae = list(formulae)
+        self.open = open
+        self.close = close
+
+    def __getitem__(self, idx: int):
+        return self.formulae[idx]
+
+    def __setitem__(self, idx: int, value: Formula):
+        self.formulae[idx] = value
+
+    def __len__(self):
+        return len(self.formulae)
+
+    def __str__(self):
+        return self.open + ','.join(map(str, self.formulae)) + self.close
+
+    def append(self, formula: Formula):
+        self.formulae.append(formula)
+
+    def remove(self, index: int):
+        self.formulae.pop(index)
+
+    def get_variables(self):
+        return set().union(*(formula.get_variables() for formula in self.formulae))
+
+
 class BinaryOperator(Operator):
     def __init__(self, symbol: str, left, right):
         self.symbol = symbol
@@ -49,15 +77,9 @@ class NandOperator(BinaryOperator):
         return not (a and b)
 
 
-class GeneralisedConjunction(Operator):
+class GeneralisedConjunction(GeneralisedOperator):
     def __init__(self, *formulae):
-        self.formulae = formulae
-
-    def __str__(self):
-        return '⟨' + ','.join(map(str, self.formulae)) + '⟩'
-
-    def get_variables(self):
-        return set().union(*(formula.get_variables() for formula in self.formulae))
+        super().__init__(formulae, '⟨', '⟩')
 
     def eval(self, symbols):
         for formula in self.formulae:
@@ -75,15 +97,9 @@ class OrOperator(BinaryOperator):
         return a or b
 
 
-class GeneralisedDisjunction(Operator):
+class GeneralisedDisjunction(GeneralisedOperator):
     def __init__(self, *formulae):
-        self.formulae = formulae
-
-    def __str__(self):
-        return '[' + ','.join(map(str, self.formulae)) + ']'
-
-    def get_variables(self):
-        return set().union(*(formula.get_variables() for formula in self.formulae))
+        super().__init__(formulae, '[', ']')
 
     def eval(self, symbols):
         for formula in self.formulae:

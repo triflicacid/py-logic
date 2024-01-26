@@ -9,7 +9,7 @@ Supports the following:
 - Evaluate formulae
 
 The following will be implemented:
-- Conversion to CNF/DNF
+- DNF/CNF: equality (xnor)
 - Tautology detection via resolution
 
 ## Parsing

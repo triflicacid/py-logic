@@ -124,7 +124,7 @@ def extract_alpha_formula(formula: Formula) -> (Formula | None, Formula | None):
 
     # X NOR Y
     if isinstance(formula, NorOperator):
-        return Negation(formula.data.left), Negation(formula.data.right)
+        return Negation(formula.left), Negation(formula.right)
 
     # X NIMPLIES Y
     if isinstance(formula, NimpliesOperator):
@@ -174,3 +174,110 @@ def extract_beta_formula(formula: Formula) -> (Formula | None, Formula | None):
 
     return None, None
 
+
+def _normal_form(original: Formula, inner, outer, inner_op, alpha_split: bool, beta_split: bool) -> GeneralisedOperator:
+    """ General normal form method. `inner` and `outer` specify inner/outer generalised groups. `_split` determines whether to split on the formula type. `inner_op` is the operator to simply replace with commas. """
+
+    def split_formula(part_1: Formula, part_2: Formula, outer_index: int, inner_index_skip: int):
+        """ Given two formula, create a split in outer_formula. `outer_index` points to the current outer formula; copy all segments but `inner_index_skip` """
+        copy_segment = outer_formulae[outer_index][:inner_index_skip] + outer_formulae[outer_index][inner_index_skip+1:]
+
+        outer_formulae.append(inner(*copy_segment, part_1))
+        replace_op(len(outer_formulae) - 1, len(copy_segment))
+
+        outer_formulae.append(inner(*copy_segment, part_2))
+        replace_op(len(outer_formulae) - 1, len(copy_segment))
+
+    def replace_op(outer_index: int, inner_index = 0, inner_index_upper: int = None):
+        """ Replace all `inner_op` with commas in `outer_formulae` """
+        formulae = outer_formulae[outer_index]
+
+        while (inner_index_upper is None or inner_index < inner_index_upper) and inner_index < len(formulae):
+            formula = formulae[inner_index]
+
+            if isinstance(formula, inner_op):
+                formulae.append(formula.left)
+                formulae.append(formula.right)
+                formulae.remove(inner_index)
+            else:
+                inner_index += 1
+
+    def process_formula(formula: Formula, extract_fn, do_split: bool) -> (bool, bool | None):
+        """ Handle alpha or beta formula, return (was action taken, requires break) """
+        p1, p2 = extract_fn(formula)
+
+        if p1 is not None:
+            if do_split:
+                # Split formula, remove current part
+                split_formula(p1, p2, i, j)
+                outer_formulae.pop(i)
+                return True, True
+            else:
+                # Add both to current clause, remove old formula
+                inner_formulae.append(p1)
+                inner_formulae.append(p2)
+                inner_formulae.remove(j)
+                replace_op(i, len(inner_formulae) - 2)
+                return True, False
+
+        return False, None
+
+    # Place in inner/outer groups to seed
+    outer_formulae: list[GeneralisedOperator] = [inner(original)]
+    replace_op(0)
+
+    i = 0
+    while i < len(outer_formulae):
+        inner_formulae = outer_formulae[i]
+        j = 0
+
+        while j < len(inner_formulae):
+            formula = inner_formulae[j]
+
+            # neg top = bottom
+            if isinstance(formula, Negation) and isinstance(formula.data, Top):
+                inner_formulae[j] = Bottom()
+                j += 1
+                continue
+
+            # neg bottom = top
+            if isinstance(formula, Negation) and isinstance(formula.data, Bottom):
+                inner_formulae[j] = Top()
+                j += 1
+                continue
+
+            # neg neg X = X
+            if isinstance(formula, Negation) and isinstance(formula.data, Negation):
+                inner_formulae[j] = formula.data.data
+                continue
+
+            # alpha formula
+            ok, requires_break = process_formula(formula, extract_alpha_formula, alpha_split)
+            if ok:
+                if requires_break:
+                    break
+
+                continue
+
+            # beta formula
+            ok, requires_break = process_formula(formula, extract_beta_formula, beta_split)
+            if ok:
+                if requires_break:
+                    break
+
+                continue
+
+            j += 1
+
+        else:
+            i += 1
+
+    return outer(*outer_formulae)
+
+
+def conjunctive_normal_form(formula: Formula):
+    return _normal_form(formula, GeneralisedDisjunction, GeneralisedConjunction, OrOperator, True, False)
+
+
+def disjunctive_normal_form(formula: Formula):
+    return _normal_form(formula, GeneralisedConjunction, GeneralisedDisjunction, AndOperator, False, True)

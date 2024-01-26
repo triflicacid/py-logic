@@ -30,7 +30,7 @@ def parse(string: str) -> (bool, Formula | str):
         nonlocal index
         count = 0
 
-        while (limit is not None and count < limit) and string[index] in ('!', '¬'):
+        while (limit is None or count < limit) and string[index] in ('!', '¬'):
             count += 1
             index += 1
 
