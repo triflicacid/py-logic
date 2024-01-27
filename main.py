@@ -2,6 +2,14 @@ import algorithm
 import parser
 
 if __name__ == "__main__":
+    _, p = parser.parse("[a]")
+    _, q = parser.parse("<a>")
+
+    print("P:", p)
+    print("Q:", q)
+    print("P = Q:", p == q)
+
+    exit(2)
     result_symbol = 'φ'
     string = "T -> b"
     ok, res = parser.parse(string)

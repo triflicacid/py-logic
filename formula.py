@@ -12,5 +12,14 @@ class Formula:
         raise NotImplementedError
 
     def get_variables(self):
+        """ Return set of all variables occurring in this formula """
         # Please override
         raise NotImplementedError
+
+    def equals(self, other: 'Formula') -> bool:
+        """ Return whether this formula is the same (syntactically) as the given formula """
+        # Please override
+        raise NotImplementedError
+
+    def __eq__(self, other):
+        return isinstance(other, Formula) and self.equals(other)

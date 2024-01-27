@@ -32,6 +32,16 @@ class GeneralisedOperator(Operator):
     def get_variables(self):
         return set().union(*(formula.get_variables() for formula in self.formulae))
 
+    def equals(self, other: 'Formula') -> bool:
+        if not isinstance(other, self.__class__) or len(self.formulae) != len(other.formulae):
+            return False
+
+        for i in range(len(self.formulae)):
+            if not self.formulae[i].equals(other.formulae[i]):
+                return False
+
+        return True
+
     def remove_empty_nested(self):
         """ Nested generalised formulae: remove empty formulae """
         i = 0
@@ -73,6 +83,9 @@ class BinaryOperator(Operator):
 
     def __str__(self):
         return "(" + str(self.left) + " " + self.symbol + " " + str(self.right) + ")"
+
+    def equals(self, other: Formula) -> bool:
+        return isinstance(other, self.__class__) and self.left.equals(other.left) and self.right.equals(other.right)
 
     def set_left(self, left):
         self.left = left
@@ -242,6 +255,9 @@ class Negation(Operator):
     def eval_const(self):
         x = self.data.eval_const()
         return None if x is None else not x
+
+    def equals(self, other: 'Formula') -> bool:
+        return isinstance(other, Negation) and self.data.equals(other.data)
 
     @staticmethod
     def nest(formula: Formula, n: int) -> Formula:

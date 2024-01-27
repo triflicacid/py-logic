@@ -24,6 +24,9 @@ class Top(Literal):
     def eval(self, symbols):
         return True
 
+    def equals(self, other: 'Formula') -> bool:
+        return isinstance(other, Top)
+
 
 class Bottom(Literal):
     symbol = '⊥'
@@ -42,6 +45,9 @@ class Bottom(Literal):
 
     def eval(self, symbols):
         return False
+
+    def equals(self, other: 'Formula') -> bool:
+        return isinstance(other, Bottom)
 
 
 class Symbol(Literal):
@@ -75,3 +81,6 @@ class Symbol(Literal):
 
     def get_variables(self):
         return {self.symbol}
+
+    def equals(self, other: 'Formula') -> bool:
+        return isinstance(other, Symbol) and self.symbol == other.symbol
