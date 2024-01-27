@@ -1,6 +1,6 @@
-from formula import Formula
-from operators import *
-from literals import Symbol, Top, Bottom
+from logic.formula import Formula
+from logic.operators import *
+from logic.literals import Symbol, Top, Bottom
 
 
 def truthtable(formula: Formula) -> list[(dict[str, bool], bool)]:

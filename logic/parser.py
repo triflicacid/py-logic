@@ -1,6 +1,6 @@
-from operators import *
-from literals import Literal, Symbol, Top, Bottom
-from formula import Formula
+from logic.operators import *
+from logic.literals import Literal, Symbol, Top, Bottom
+from logic.formula import Formula
 from typing import Any
 
 # Map of binary operators; string => (Operator, Not Variant)

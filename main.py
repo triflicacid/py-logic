@@ -1,5 +1,5 @@
-import algorithm
-import parser
+import logic.algorithm as algorithm
+import logic.parser as parser
 
 if __name__ == "__main__":
     _, p = parser.parse("[a]")
