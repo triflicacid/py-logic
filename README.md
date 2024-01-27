@@ -18,11 +18,11 @@ Formulae are in the form: `<lit/group> [[!]<op> <lit/group>]` where
 - `<op>` is an operator. These may be preceded by a negation to produce the negated variant.
 
 **Literals**
-- Bottom (false): `F`, `⊥`.
-- Top (true): `T`, `⊤`.
+- Bottom (false): `F`, `⊥`, `0`.
+- Top (true): `T`, `⊤`, `0`.
 - Symbol (variable): in the form `[a-zA-Z][a-zA-z0-9]*`.
 
-**Negation**: `!`, `¬`. Used to negate literals, groups, or operators.
+**Negation**: `!`, `¬`, `~`. Used to negate literals, groups, or operators.
 
 **Binary Connectives**
 - Conjunction (Or): `+`, `|`.

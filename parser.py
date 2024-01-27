@@ -30,7 +30,7 @@ def parse(string: str) -> (bool, Formula | str):
         nonlocal index
         count = 0
 
-        while index < len(string) and (limit is None or count < limit) and string[index] in ('!', '¬'):
+        while index < len(string) and (limit is None or count < limit) and string[index] in ('!', '¬', '~'):
             count += 1
             index += 1
 
@@ -47,12 +47,12 @@ def parse(string: str) -> (bool, Formula | str):
         literal = None
 
         # Literal: top
-        if string[index] in (Top.symbol, 'T'):
+        if string[index] in (Top.symbol, 'T', '1'):
             index += 1
             literal = Top()
 
         # Literal: bottom
-        elif string[index] in (Bottom.symbol, 'F'):
+        elif string[index] in (Bottom.symbol, 'F', '0'):
             index += 1
             literal = Bottom()
 
@@ -103,7 +103,6 @@ def parse(string: str) -> (bool, Formula | str):
         nonlocal index
 
         negations = parse_negation()
-        group = None
 
         if index >= len(string):
             return False, f"Index {index}: expected '(', '[', '<' or literal, got end of input"

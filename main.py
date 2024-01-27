@@ -3,7 +3,7 @@ import parser
 
 if __name__ == "__main__":
     result_symbol = 'φ'
-    string = "!(a != b)"
+    string = "1 . a"
     ok, res = parser.parse(string)
 
     if not ok:
