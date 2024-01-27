@@ -134,6 +134,14 @@ def extract_alpha_formula(formula: Formula) -> (Formula | None, Formula | None):
     if isinstance(formula, ReverseNimpliesOperator):
         return Negation(formula.left), formula.right
 
+    # X != Y
+    if isinstance(formula, NonEqualityOperator):
+        return OrOperator(formula.left, formula.right), Negation(AndOperator(formula.left, formula.right))
+
+    # !(X = Y)
+    if isinstance(formula, Negation) and isinstance(formula.data, EqualityOperator):
+        return OrOperator(formula.data.left, formula.data.right), Negation(AndOperator(formula.data.left, formula.data.right))
+
     return None, None
 
 
@@ -171,6 +179,14 @@ def extract_beta_formula(formula: Formula) -> (Formula | None, Formula | None):
     # NOT (X REV. NIMPLIES Y)
     if isinstance(formula, Negation) and isinstance(formula.data, ReverseNimpliesOperator):
         return formula.data.left, Negation(formula.data.right)
+
+    # X = Y
+    if isinstance(formula, EqualityOperator):
+        return AndOperator(Negation(formula.left), Negation(formula.right)), AndOperator(formula.left, formula.right)
+
+    # !(X != Y)
+    if isinstance(formula, Negation) and isinstance(formula.data, NonEqualityOperator):
+        return AndOperator(Negation(formula.data.left), Negation(formula.data.right)), AndOperator(formula.data.left, formula.data.right)
 
     return None, None
 

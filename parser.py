@@ -30,7 +30,7 @@ def parse(string: str) -> (bool, Formula | str):
         nonlocal index
         count = 0
 
-        while (limit is None or count < limit) and string[index] in ('!', '¬'):
+        while index < len(string) and (limit is None or count < limit) and string[index] in ('!', '¬'):
             count += 1
             index += 1
 
@@ -65,7 +65,7 @@ def parse(string: str) -> (bool, Formula | str):
             literal = Symbol(string[start:index])
 
         else:
-            return False, f"Index {index}: Syntax Error: '{string[index]}'"
+            return False, f"Index {index}: expected literal, got '{string[index:index+5]}'"
 
         return True, Negation.nest(literal, negations)
 
@@ -93,7 +93,7 @@ def parse(string: str) -> (bool, Formula | str):
         if index >= len(string):
             return False, f"Index {index}: unexpected end of input, expected '{close}'"
         if not string[index:].startswith(close):
-            return False, f"Index {index}: expected '{close}', got {string[index:index + 5]}"
+            return False, f"Index {index}: expected '{close}', got '{string[index:index + 5]}'"
 
         index += len(close)
         return True, res
@@ -104,6 +104,9 @@ def parse(string: str) -> (bool, Formula | str):
 
         negations = parse_negation()
         group = None
+
+        if index >= len(string):
+            return False, f"Index {index}: expected '(', '[', '<' or literal, got end of input"
 
         if string[index] == '(':
             # Group
