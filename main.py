@@ -3,7 +3,7 @@ import parser
 
 if __name__ == "__main__":
     result_symbol = 'φ'
-    string = "[<a, b>, !b]"
+    string = "T -> b"
     ok, res = parser.parse(string)
 
     if not ok:
@@ -15,6 +15,7 @@ if __name__ == "__main__":
     proposition = res
 
     print(result_symbol + ": " + str(proposition))
+    print("const: " + str(proposition.eval_const()))
     algorithm.print_truthtable(proposition, result_symbol=result_symbol)
     print()
 

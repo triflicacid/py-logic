@@ -82,9 +82,15 @@ def parse(string: str) -> (bool, Formula | str):
 
         return None
 
-    def parse_surrounded_clause(close: str, parse_fn) -> (bool, Any | str):
+    def parse_surrounded_clause(close: str, parse_fn, default = None) -> (bool, Any | str):
         """ Parse a clause surrounded by `open` and `close`. Note,  open` has already been encountered. """
         nonlocal index
+
+        eat_whitespace()
+
+        if default is not None and string[index:].startswith(close):
+            index += len(close)
+            return True, default
 
         ok, res = parse_fn()
         if not ok:
@@ -118,7 +124,7 @@ def parse(string: str) -> (bool, Formula | str):
 
         elif string[index] == '[':
             index += 1
-            ok, res = parse_surrounded_clause(']', lambda: parse_comma_seperated(']'))
+            ok, res = parse_surrounded_clause(']', lambda: parse_comma_seperated(']'), [])
             if not ok:
                 return ok, res
 
@@ -126,7 +132,7 @@ def parse(string: str) -> (bool, Formula | str):
 
         elif string[index] == '<':
             index += 1
-            ok, res = parse_surrounded_clause('>', lambda: parse_comma_seperated('>'))
+            ok, res = parse_surrounded_clause('>', lambda: parse_comma_seperated('>'), [])
             if not ok:
                 return ok, res
 

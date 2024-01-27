@@ -57,6 +57,20 @@ class BinaryOperator(Operator):
     def eval(self, symbols):
         return self.op(self.left.eval(symbols), self.right.eval(symbols))
 
+    def eval_const(self):
+        l = self.left.eval_const()
+        r = self.right.eval_const()
+
+        if l is None and r is None:
+            return None
+
+        # If one is None, try with the other
+        if l is None:
+            return True if self.op(True, r) and self.op(False, r) else None
+
+        else:
+            return True if self.op(l, True) and self.op(l, False) else None
+
     def __str__(self):
         return "(" + str(self.left) + " " + self.symbol + " " + str(self.right) + ")"
 
@@ -73,7 +87,7 @@ class BinaryOperator(Operator):
 
     def op(self, a, b):
         # Please override
-        pass
+        raise NotImplementedError
 
 
 class AndOperator(BinaryOperator):
@@ -96,6 +110,20 @@ class GeneralisedConjunction(GeneralisedOperator):
     def __init__(self, *formulae):
         super().__init__(formulae, '⟨', '⟩')
 
+    def eval_const(self):
+        encountered_none = False
+
+        for formula in self.formulae:
+            x = formula.eval_const()
+
+            if x is None:
+                encountered_none = True
+
+            elif not x:
+                return False
+
+        return None if encountered_none else True
+
     def eval(self, symbols):
         for formula in self.formulae:
             if not formula.eval(symbols):
@@ -115,6 +143,20 @@ class OrOperator(BinaryOperator):
 class GeneralisedDisjunction(GeneralisedOperator):
     def __init__(self, *formulae):
         super().__init__(formulae, '[', ']')
+
+    def eval_const(self):
+        encountered_none = False
+
+        for formula in self.formulae:
+            x = formula.eval_const()
+
+            if x is None:
+                encountered_none = True
+
+            elif x:
+                return True
+
+        return None if encountered_none else False
 
     def eval(self, symbols):
         for formula in self.formulae:
@@ -196,6 +238,10 @@ class Negation(Operator):
 
     def eval(self, symbols):
         return not self.data.eval(symbols)
+
+    def eval_const(self):
+        x = self.data.eval_const()
+        return None if x is None else not x
 
     @staticmethod
     def nest(formula: Formula, n: int) -> Formula:

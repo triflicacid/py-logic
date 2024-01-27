@@ -18,6 +18,9 @@ class Top(Literal):
     def get_variables(self):
         return set()
 
+    def eval_const(self):
+        return True
+
     def eval(self, symbols):
         return True
 
@@ -34,6 +37,9 @@ class Bottom(Literal):
     def get_variables(self):
         return set()
 
+    def eval_const(self):
+        return False
+
     def eval(self, symbols):
         return False
 
@@ -45,11 +51,14 @@ class Symbol(Literal):
     def __str__(self):
         return self.symbol
 
+    def eval_const(self):
+        # Value of symbol is not const
+        return None
+
     def eval(self, symbols):
         if self.symbol in symbols:
             return symbols[self.symbol]
 
-        value = None
         user = input(f"Provide truth value of '{self.symbol}' [T/F]: ")
         while True:
             if user == 'T':
