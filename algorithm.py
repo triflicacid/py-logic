@@ -194,27 +194,38 @@ def extract_beta_formula(formula: Formula) -> (Formula | None, Formula | None):
 def _normal_form(original: Formula, inner, outer, inner_op, alpha_split: bool, beta_split: bool) -> GeneralisedOperator:
     """ General normal form method. `inner` and `outer` specify inner/outer generalised groups. `_split` determines whether to split on the formula type. `inner_op` is the operator to simply replace with commas. """
 
-    def split_formula(part_1: Formula, part_2: Formula, outer_index: int, inner_index_skip: int):
-        """ Given two formula, create a split in outer_formula. `outer_index` points to the current outer formula; copy all segments but `inner_index_skip` """
+    def split_formula(parts: list[Formula], outer_index: int, inner_index_skip: int):
+        """ Given a list of formulae, create a split in outer_formula. `outer_index` points to the current outer formula; copy all segments but `inner_index_skip` """
         copy_segment = outer_formulae[outer_index][:inner_index_skip] + outer_formulae[outer_index][inner_index_skip+1:]
 
-        outer_formulae.append(inner(*copy_segment, part_1))
-        replace_op(len(outer_formulae) - 1, len(copy_segment))
+        for part in parts:
+            outer_formulae.append(inner(*copy_segment, part))
+            prepare_formula(len(outer_formulae) - 1, len(copy_segment))
 
-        outer_formulae.append(inner(*copy_segment, part_2))
-        replace_op(len(outer_formulae) - 1, len(copy_segment))
 
-    def replace_op(outer_index: int, inner_index = 0, inner_index_upper: int = None):
-        """ Replace all `inner_op` with commas in `outer_formulae` """
+    def prepare_formula(outer_index: int, inner_index = 0, inner_index_upper: int = None):
+        """ Prepare formula for algorithm: replace all `inner_op` with commas, resolve generalised (con/dis)junctions """
         formulae = outer_formulae[outer_index]
 
         while (inner_index_upper is None or inner_index < inner_index_upper) and inner_index < len(formulae):
             formula = formulae[inner_index]
 
+            # Operator: separate via commas
             if isinstance(formula, inner_op):
                 formulae.append(formula.left)
                 formulae.append(formula.right)
                 formulae.remove(inner_index)
+
+            # inner generalised: merge into current
+            elif isinstance(formula, inner):
+                formulae.append(*formula.formulae)
+                formulae.remove(inner_index)
+
+            # outer generalised: split across
+            elif isinstance(formula, outer):
+                split_formula(formula.formulae, outer_index, inner_index)
+                formulae.remove(inner_index)
+
             else:
                 inner_index += 1
 
@@ -225,7 +236,7 @@ def _normal_form(original: Formula, inner, outer, inner_op, alpha_split: bool, b
         if p1 is not None:
             if do_split:
                 # Split formula, remove current part
-                split_formula(p1, p2, i, j)
+                split_formula([p1, p2], i, j)
                 outer_formulae.pop(i)
                 return True, True
             else:
@@ -233,14 +244,14 @@ def _normal_form(original: Formula, inner, outer, inner_op, alpha_split: bool, b
                 inner_formulae.append(p1)
                 inner_formulae.append(p2)
                 inner_formulae.remove(j)
-                replace_op(i, len(inner_formulae) - 2)
+                prepare_formula(i, len(inner_formulae) - 2)
                 return True, False
 
         return False, None
 
     # Place in inner/outer groups to seed
     outer_formulae: list[GeneralisedOperator] = [inner(original)]
-    replace_op(0)
+    prepare_formula(0)
 
     i = 0
     while i < len(outer_formulae):
@@ -288,7 +299,11 @@ def _normal_form(original: Formula, inner, outer, inner_op, alpha_split: bool, b
         else:
             i += 1
 
-    return outer(*outer_formulae)
+    # Remove empty clauses
+    formula: GeneralisedOperator = outer(*outer_formulae)
+    formula.remove_empty_nested()
+    return formula
+
 
 
 def conjunctive_normal_form(formula: Formula):

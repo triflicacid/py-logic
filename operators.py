@@ -23,14 +23,29 @@ class GeneralisedOperator(Operator):
     def __str__(self):
         return self.open + ','.join(map(str, self.formulae)) + self.close
 
-    def append(self, formula: Formula):
-        self.formulae.append(formula)
+    def append(self, *formula: list[Formula]):
+        self.formulae.extend(formula)
 
     def remove(self, index: int):
         self.formulae.pop(index)
 
     def get_variables(self):
         return set().union(*(formula.get_variables() for formula in self.formulae))
+
+    def remove_empty_nested(self):
+        """ Nested generalised formulae: remove empty formulae """
+        i = 0
+        while i < len(self.formulae):
+            formula = self.formulae[i]
+
+            if isinstance(formula, GeneralisedOperator):
+                formula.remove_empty_nested()
+
+                if len(formula) == 0:
+                    self.formulae.pop(i)
+                    continue
+
+            i += 1
 
 
 class BinaryOperator(Operator):
