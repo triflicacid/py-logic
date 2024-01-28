@@ -1,32 +1,37 @@
-from logic.operators import *
-from logic.literals import Literal, Symbol, Top, Bottom
+from typing import Any, Callable
+
+from logic.literals import Symbol, Top, Bottom
 from logic.formula import Formula
-from typing import Any
+from logic.operators import AndOperator, NandOperator, NorOperator, OrOperator, ImpliesOperator, \
+    ReverseImpliesOperator, EqualityOperator, NonEqualityOperator, ReverseNotImpliesOperator, NotImpliesOperator, \
+    Negation, GeneralisedDisjunction, GeneralisedConjunction
 
 # Map of binary operators; string => (Operator, Not Variant)
 binary_operators = {
-    '&': (AndOperator, NandOperator), '.': (AndOperator, NandOperator),
-    '|': (OrOperator, NorOperator), '+': (OrOperator, NorOperator),
-    '->': (ImpliesOperator, NimpliesOperator),
-    '<-': (ReverseImpliesOperator, ReverseNimpliesOperator),
-    '=': (EqualityOperator, NonEqualityOperator)
+    '&': (AndOperator, NandOperator),
+    '.': (AndOperator, NandOperator),
+    '|': (OrOperator, NorOperator),
+    '+': (OrOperator, NorOperator),
+    '->': (ImpliesOperator, NotImpliesOperator),
+    '<-': (ReverseImpliesOperator, ReverseNotImpliesOperator),
+    '=': (EqualityOperator, NonEqualityOperator),
 }
 
 
-def parse(string: str) -> (bool, Formula | str):
-    """ Given a string, return parsed Formula, or error message: X [op Y] """
+def parse(string: str) -> tuple[bool, Formula | str]:
+    """ Given a string, return parsed Formula, or error message: X [op Y]. """
 
     index = 0
 
     def eat_whitespace():
-        """ Each whitespace from string[index] """
+        """ Each whitespace from string[index]. """
         nonlocal index
 
         while index < len(string) and string[index] == ' ':
             index += 1
 
     def parse_negation(limit: int = None) -> int:
-        """ Return number of negations encountered """
+        """ Return number of negations encountered. """
         nonlocal index
         count = 0
 
@@ -36,15 +41,13 @@ def parse(string: str) -> (bool, Formula | str):
 
         return count
 
-    def parse_literal() -> (bool, Literal | str):
-        """ Parse a literal """
+    def parse_literal() -> tuple[bool, Formula | str]:
+        """ Parse a literal: top, bottom, symbol. """
         nonlocal index
 
         # Is literal negated?
         negations = parse_negation()
         eat_whitespace()
-
-        literal = None
 
         # Literal: top
         if string[index] in (Top.symbol, 'T', '1'):
@@ -65,12 +68,12 @@ def parse(string: str) -> (bool, Formula | str):
             literal = Symbol(string[start:index])
 
         else:
-            return False, f"Index {index}: expected literal, got '{string[index:index+5]}'"
+            return False, f"Index {index}: expected literal, got '{string[index:index + 5]}'"
 
         return True, Negation.nest(literal, negations)
 
     def parse_operator():
-        """ Parse operator; return class constructor """
+        """ Parse operator; return class constructor. """
         nonlocal index
 
         negations = parse_negation(1)
@@ -82,30 +85,34 @@ def parse(string: str) -> (bool, Formula | str):
 
         return None
 
-    def parse_surrounded_clause(close: str, parse_fn, default = None) -> (bool, Any | str):
+    def parse_surrounded_clause(close: str, parse_fn: Callable[[], Any], default=None) -> tuple[bool, Any | str]:
         """ Parse a clause surrounded by `open` and `close`. Note,  open` has already been encountered. """
         nonlocal index
 
         eat_whitespace()
 
+        # Does this group immediately close?
         if default is not None and string[index:].startswith(close):
             index += len(close)
             return True, default
 
         ok, res = parse_fn()
+
         if not ok:
             return ok, res
 
         if index >= len(string):
             return False, f"Index {index}: unexpected end of input, expected '{close}'"
+
         if not string[index:].startswith(close):
             return False, f"Index {index}: expected '{close}', got '{string[index:index + 5]}'"
 
         index += len(close)
+
         return True, res
 
-    def parse_group() -> (bool, Formula | str):
-        """ Parse group (bracketed) or literal or generalised con- or disjunction """
+    def parse_group() -> tuple[bool, Formula | str]:
+        """ Parse group (bracketed) or literal or generalised con- or disjunction. """
         nonlocal index
 
         negations = parse_negation()
@@ -148,8 +155,8 @@ def parse(string: str) -> (bool, Formula | str):
 
         return True, Negation.nest(group, negations)
 
-    def parse_comma_seperated(close: str) -> (bool, list[Formula] | str):
-        """ Parse a comma-seperated list of formulae. List ends with end-of-input or `close` """
+    def parse_comma_seperated(close: str) -> tuple[bool, list[Formula] | str]:
+        """ Parse a comma-seperated list of formulae. List ends with end-of-input or `close`. """
         nonlocal index
         formulae = []
 
@@ -172,12 +179,12 @@ def parse(string: str) -> (bool, Formula | str):
                 eat_whitespace()
                 continue
 
-            return False, f"Index {index}: expected ',' or '{close}' or end of input, got '{string[index:index+5]}'"
+            return False, f"Index {index}: expected ',' or '{close}' or end of input, got '{string[index:index + 5]}'"
 
         return True, formulae
 
-    def parse_formula(terminal: set[str] = None) -> (bool, Formula | str):
-        """ Parse a group in the form `[lit/formula] [[op] [lit/formula]]` """
+    def parse_formula(terminal: set[str] = None) -> tuple[bool, Formula | str]:
+        """ Parse a group in the form `[lit/formula] [[op] [lit/formula]]`. """
         nonlocal index
 
         # Literal/Group 1
@@ -197,7 +204,7 @@ def parse(string: str) -> (bool, Formula | str):
         # Operator
         op = parse_operator()
         if op is None:
-            return False, f"Index {index}: expected operator, got '{string[index:index+5]}'"
+            return False, f"Index {index}: expected operator, got '{string[index:index + 5]}'"
 
         eat_whitespace()
 

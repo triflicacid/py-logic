@@ -1,17 +1,22 @@
 from logic.formula import Formula
-from logic.operators import *
 from logic.literals import Symbol, Top, Bottom
+from logic.operators import GeneralisedDisjunction, GeneralisedConjunction, Negation, AndOperator, OrOperator, \
+    ImpliesOperator, ReverseImpliesOperator, NandOperator, NorOperator, NotImpliesOperator, ReverseNotImpliesOperator, \
+    NonEqualityOperator, EqualityOperator, BinaryOperator, GeneralisedOperator
+
+TruthTable = list[(dict[str, bool], bool)]
 
 
-def truthtable(formula: Formula) -> list[(dict[str, bool], bool)]:
-    """ Return truthtable for the given formula """
+def truth_table(formula: Formula) -> TruthTable:
+    """ Return truth table for the given formula """
     variables = sorted(formula.get_variables())
     state = [False] * len(variables)
     table = []
 
     while True:
         # Create variable assignments
-        symbols = dict()
+        symbols = {}
+
         for i in range(len(variables)):
             symbols[variables[i]] = state[i]
 
@@ -35,10 +40,10 @@ def truthtable(formula: Formula) -> list[(dict[str, bool], bool)]:
     return table
 
 
-def print_truthtable(formula: Formula, true_symbol = "T", false_symbol = "F", result_symbol = "φ"):
-    """ Same as truthtable(), but print table """
+def print_truth_table(formula: Formula, true_symbol='T', false_symbol='F', result_symbol='φ'):
+    """ Same as truthtable(), but print table. """
     # Generate the truth table
-    table = truthtable(formula)
+    table = truth_table(formula)
 
     if len(table) == 0:
         return
@@ -58,15 +63,16 @@ def print_truthtable(formula: Formula, true_symbol = "T", false_symbol = "F", re
 
     print('||-' + '-' * max_tf_len + '-|')
 
-    for (symbols, result) in table:
+    for symbols, result in table:
         for symbol in symbols:
-            print('| ' + str(true_symbol if symbols[symbol] else false_symbol).center(max(max_tf_len, len(symbol)), ' ') + ' ', end='')
+            print('| ' + str(true_symbol if symbols[symbol] else false_symbol).center(max(max_tf_len, len(symbol)), ' ')
+                  + ' ', end='')
 
         print('|| ' + str(true_symbol if result else false_symbol).center(max(max_tf_len, len(result_symbol))) + ' |')
 
 
 def rank(formula: Formula) -> int:
-    """ Determine a formula's rank """
+    """ Determine a formula's rank. """
     # r([x1, x2, ...]) = SUM r(r_i)
     if isinstance(formula, GeneralisedDisjunction) or isinstance(formula, GeneralisedConjunction):
         return sum(map(rank, formula.formulae))
@@ -88,19 +94,19 @@ def rank(formula: Formula) -> int:
         return 1 + rank(formula.data.data)
 
     # Alpha/Beta formula
-    (a1, a2) = extract_alpha_formula(formula)
+    a1, a2 = extract_alpha_formula(formula)
     if a1 is not None:
         return 1 + rank(a1) + rank(a2)
 
-    (b1, b2) = extract_beta_formula(formula)
+    b1, b2 = extract_beta_formula(formula)
     if b1 is not None:
         return 1 + rank(b1) + rank(b2)
 
     raise ValueError(formula)
 
 
-def extract_alpha_formula(formula: Formula) -> (Formula | None, Formula | None):
-    """ Given a formula, return alpha_1, alpha_2 if it is in alpha (conjunction) formula """
+def extract_alpha_formula(formula: Formula) -> tuple[Formula | None, Formula | None]:
+    """ Given a formula, return alpha_1, alpha_2 if it is in alpha (conjunction) formula. """
 
     # X AND Y
     if isinstance(formula, AndOperator):
@@ -126,27 +132,28 @@ def extract_alpha_formula(formula: Formula) -> (Formula | None, Formula | None):
     if isinstance(formula, NorOperator):
         return Negation(formula.left), Negation(formula.right)
 
-    # X NIMPLIES Y
-    if isinstance(formula, NimpliesOperator):
+    # X NOT IMPLIES Y
+    if isinstance(formula, NotImpliesOperator):
         return formula.left, Negation(formula.right)
 
-    # X REV. NIMPLIES Y
-    if isinstance(formula, ReverseNimpliesOperator):
+    # X REV. NOT IMPLIES Y
+    if isinstance(formula, ReverseNotImpliesOperator):
         return Negation(formula.left), formula.right
 
-    # X != Y
+    # X NOT EQUALS Y
     if isinstance(formula, NonEqualityOperator):
         return OrOperator(formula.left, formula.right), Negation(AndOperator(formula.left, formula.right))
 
-    # !(X = Y)
+    # NOT (X EQUALS Y)
     if isinstance(formula, Negation) and isinstance(formula.data, EqualityOperator):
-        return OrOperator(formula.data.left, formula.data.right), Negation(AndOperator(formula.data.left, formula.data.right))
+        return OrOperator(formula.data.left, formula.data.right), Negation(AndOperator(formula.data.left,
+                                                                                       formula.data.right))
 
     return None, None
 
 
-def extract_beta_formula(formula: Formula) -> (Formula | None, Formula | None):
-    """ Given a formula, return beta_a, beta_2 if it is a beta (disjunction) formula """
+def extract_beta_formula(formula: Formula) -> tuple[Formula | None, Formula | None]:
+    """ Given a formula, return beta_a, beta_2 if it is a beta (disjunction) formula. """
 
     # NOT (X AND Y)
     if isinstance(formula, Negation) and isinstance(formula.data, AndOperator):
@@ -172,39 +179,47 @@ def extract_beta_formula(formula: Formula) -> (Formula | None, Formula | None):
     if isinstance(formula, Negation) and isinstance(formula.data, NorOperator):
         return formula.data.left, formula.data.right
 
-    #  NOT (X NIMPLIES Y)
-    if isinstance(formula, Negation) and isinstance(formula.data, NimpliesOperator):
+    #  NOT (X NOT IMPLIES Y)
+    if isinstance(formula, Negation) and isinstance(formula.data, NotImpliesOperator):
         return Negation(formula.data.left), formula.data.right
 
-    # NOT (X REV. NIMPLIES Y)
-    if isinstance(formula, Negation) and isinstance(formula.data, ReverseNimpliesOperator):
+    # NOT (X REV. NOT IMPLIES Y)
+    if isinstance(formula, Negation) and isinstance(formula.data, ReverseNotImpliesOperator):
         return formula.data.left, Negation(formula.data.right)
 
-    # X = Y
+    # X EQUALS Y
     if isinstance(formula, EqualityOperator):
         return AndOperator(Negation(formula.left), Negation(formula.right)), AndOperator(formula.left, formula.right)
 
-    # !(X != Y)
+    # NOT (X NOT EQUALS Y)
     if isinstance(formula, Negation) and isinstance(formula.data, NonEqualityOperator):
-        return AndOperator(Negation(formula.data.left), Negation(formula.data.right)), AndOperator(formula.data.left, formula.data.right)
+        return AndOperator(Negation(formula.data.left), Negation(formula.data.right)), AndOperator(formula.data.left,
+                                                                                                   formula.data.right)
 
     return None, None
 
 
-def _normal_form(original: Formula, inner, outer, inner_op, alpha_split: bool, beta_split: bool) -> GeneralisedOperator:
-    """ General normal form method. `inner` and `outer` specify inner/outer generalised groups. `_split` determines whether to split on the formula type. `inner_op` is the operator to simply replace with commas. """
+def normal_form(original: Formula,
+                inner: type[GeneralisedConjunction | GeneralisedDisjunction],
+                outer: type[GeneralisedConjunction | GeneralisedDisjunction],
+                inner_op: type[BinaryOperator],
+                alpha_split: bool,
+                beta_split: bool) -> GeneralisedOperator:
+    """ General normal form method. `inner` and `outer` specify inner/outer generalised groups. `_split` determines
+    whether to split on the formula type. `inner_op` is the operator to simply replace with commas. """
 
     def split_formula(parts: list[Formula], outer_index: int, inner_index_skip: int):
-        """ Given a list of formulae, create a split in outer_formula. `outer_index` points to the current outer formula; copy all segments but `inner_index_skip` """
+        """ Given a list of formulae, create a split in outer_formula. `outer_index` points to the current outer
+        formula; copy all segments but `inner_index_skip`. """
         copy_segment = outer_formulae[outer_index][:inner_index_skip] + outer_formulae[outer_index][inner_index_skip+1:]
 
         for part in parts:
             outer_formulae.append(inner(*copy_segment, part))
             prepare_formula(len(outer_formulae) - 1, len(copy_segment))
 
-
-    def prepare_formula(outer_index: int, inner_index = 0, inner_index_upper: int = None):
-        """ Prepare formula for algorithm: replace all `inner_op` with commas, resolve generalised (con/dis)junctions """
+    def prepare_formula(outer_index: int, inner_index=0, inner_index_upper: int | None = None):
+        """ Prepare formula for algorithm: replace all `inner_op` with commas,
+        resolve generalised (con/dis)junctions. """
         formulae = outer_formulae[outer_index]
 
         while (inner_index_upper is None or inner_index < inner_index_upper) and inner_index < len(formulae):
@@ -229,7 +244,7 @@ def _normal_form(original: Formula, inner, outer, inner_op, alpha_split: bool, b
             else:
                 inner_index += 1
 
-    def process_formula(formula: Formula, extract_fn, do_split: bool) -> (bool, bool | None):
+    def process_formula(formula: Formula, extract_fn, do_split: bool) -> tuple[bool, bool | None]:
         """ Handle alpha or beta formula, return (was action taken, requires break) """
         p1, p2 = extract_fn(formula)
 
@@ -250,7 +265,7 @@ def _normal_form(original: Formula, inner, outer, inner_op, alpha_split: bool, b
         return False, None
 
     # Place in inner/outer groups to seed
-    outer_formulae: list[GeneralisedOperator] = [inner(original)]
+    outer_formulae = [inner(original)]
     prepare_formula(0)
 
     i = 0
@@ -300,15 +315,14 @@ def _normal_form(original: Formula, inner, outer, inner_op, alpha_split: bool, b
             i += 1
 
     # Remove empty clauses
-    formula: GeneralisedOperator = outer(*outer_formulae)
+    formula = outer(*outer_formulae)
     formula.remove_empty_nested()
     return formula
 
 
-
 def conjunctive_normal_form(formula: Formula):
-    return _normal_form(formula, GeneralisedDisjunction, GeneralisedConjunction, OrOperator, True, False)
+    return normal_form(formula, GeneralisedDisjunction, GeneralisedConjunction, OrOperator, True, False)
 
 
 def disjunctive_normal_form(formula: Formula):
-    return _normal_form(formula, GeneralisedConjunction, GeneralisedDisjunction, AndOperator, False, True)
+    return normal_form(formula, GeneralisedConjunction, GeneralisedDisjunction, AndOperator, False, True)

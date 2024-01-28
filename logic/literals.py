@@ -3,14 +3,14 @@ from logic.formula import Formula
 
 class Literal(Formula):
     def __init__(self):
-        pass
+        super().__init__()
 
 
 class Top(Literal):
     symbol = '⊤'
 
     def __init__(self):
-        pass
+        super().__init__()
 
     def __str__(self):
         return Top.symbol
@@ -21,10 +21,10 @@ class Top(Literal):
     def eval_const(self):
         return True
 
-    def eval(self, symbols):
+    def eval(self, symbols: set[str]):
         return True
 
-    def equals(self, other: 'Formula') -> bool:
+    def equals(self, other: Formula) -> bool:
         return isinstance(other, Top)
 
 
@@ -32,7 +32,7 @@ class Bottom(Literal):
     symbol = '⊥'
 
     def __init__(self):
-        pass
+        super().__init__()
 
     def __str__(self):
         return Bottom.symbol
@@ -43,15 +43,16 @@ class Bottom(Literal):
     def eval_const(self):
         return False
 
-    def eval(self, symbols):
+    def eval(self, symbols: set[str]):
         return False
 
-    def equals(self, other: 'Formula') -> bool:
+    def equals(self, other: Formula) -> bool:
         return isinstance(other, Bottom)
 
 
 class Symbol(Literal):
     def __init__(self, symbol: str):
+        super().__init__()
         self.symbol = symbol
 
     def __str__(self):
@@ -61,7 +62,7 @@ class Symbol(Literal):
         # Value of symbol is not const
         return None
 
-    def eval(self, symbols):
+    def eval(self, symbols: dict[str, bool]):
         if self.symbol in symbols:
             return symbols[self.symbol]
 
@@ -82,5 +83,5 @@ class Symbol(Literal):
     def get_variables(self):
         return {self.symbol}
 
-    def equals(self, other: 'Formula') -> bool:
+    def equals(self, other: Formula) -> bool:
         return isinstance(other, Symbol) and self.symbol == other.symbol

@@ -6,10 +6,10 @@ class Operator(Formula):
 
 
 class GeneralisedOperator(Operator):
-    def __init__(self, formulae: list[Formula], open: str, close: str):
+    def __init__(self, formulae: list[Formula], open_tag: str, close_tag: str):
         self.formulae = list(formulae)
-        self.open = open
-        self.close = close
+        self.open_tag = open_tag
+        self.close_tag = close_tag
 
     def __getitem__(self, idx: int):
         return self.formulae[idx]
@@ -21,10 +21,10 @@ class GeneralisedOperator(Operator):
         return len(self.formulae)
 
     def __str__(self):
-        return self.open + ','.join(map(str, self.formulae)) + self.close
+        return self.open_tag + ','.join(map(str, self.formulae)) + self.close_tag
 
     def append(self, *formula: list[Formula]):
-        self.formulae.extend(formula)
+        self.formulae.extend(*formula)
 
     def remove(self, index: int):
         self.formulae.pop(index)
@@ -32,7 +32,7 @@ class GeneralisedOperator(Operator):
     def get_variables(self):
         return set().union(*(formula.get_variables() for formula in self.formulae))
 
-    def equals(self, other: 'Formula') -> bool:
+    def equals(self, other: Formula) -> bool:
         if not isinstance(other, self.__class__) or len(self.formulae) != len(other.formulae):
             return False
 
@@ -60,6 +60,7 @@ class GeneralisedOperator(Operator):
 
 class BinaryOperator(Operator):
     def __init__(self, symbol: str, left, right):
+        super().__init__()
         self.symbol = symbol
         self.left = left
         self.right = right
@@ -68,32 +69,24 @@ class BinaryOperator(Operator):
         return self.op(self.left.eval(symbols), self.right.eval(symbols))
 
     def eval_const(self):
-        l = self.left.eval_const()
-        r = self.right.eval_const()
+        left = self.left.eval_const()
+        right = self.right.eval_const()
 
-        if l is None and r is None:
+        if left is None and right is None:
             return None
 
         # If one is None, try with the other
-        if l is None:
-            return True if self.op(True, r) and self.op(False, r) else None
+        if left is None:
+            return True if self.op(True, right) and self.op(False, right) else None
 
         else:
-            return True if self.op(l, True) and self.op(l, False) else None
+            return True if self.op(left, True) and self.op(left, False) else None
 
     def __str__(self):
-        return "(" + str(self.left) + " " + self.symbol + " " + str(self.right) + ")"
+        return f"({self.left}) {self.symbol} ({self.right})"
 
     def equals(self, other: Formula) -> bool:
         return isinstance(other, self.__class__) and self.left.equals(other.left) and self.right.equals(other.right)
-
-    def set_left(self, left):
-        self.left = left
-        return self
-
-    def set_right(self, right):
-        self.right = right
-        return self
 
     def get_variables(self):
         return self.left.get_variables() | self.right.get_variables()
@@ -104,16 +97,16 @@ class BinaryOperator(Operator):
 
 
 class AndOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('∧', l, r)
+    def __init__(self, left, right):
+        super().__init__('∧', left, right)
 
     def op(self, a, b):
         return a and b
 
 
 class NandOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('↑', l, r)
+    def __init__(self, left, right):
+        super().__init__('↑', left, right)
 
     def op(self, a, b):
         return not (a and b)
@@ -127,12 +120,12 @@ class GeneralisedConjunction(GeneralisedOperator):
         encountered_none = False
 
         for formula in self.formulae:
-            x = formula.eval_const()
+            ans = formula.eval_const()
 
-            if x is None:
+            if ans is None:
                 encountered_none = True
 
-            elif not x:
+            elif not ans:
                 return False
 
         return None if encountered_none else True
@@ -146,8 +139,8 @@ class GeneralisedConjunction(GeneralisedOperator):
 
 
 class OrOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('∨', l, r)
+    def __init__(self, left, right):
+        super().__init__('∨', left, right)
 
     def op(self, a, b):
         return a or b
@@ -161,12 +154,12 @@ class GeneralisedDisjunction(GeneralisedOperator):
         encountered_none = False
 
         for formula in self.formulae:
-            x = formula.eval_const()
+            ans = formula.eval_const()
 
-            if x is None:
+            if ans is None:
                 encountered_none = True
 
-            elif x:
+            elif ans:
                 return True
 
         return None if encountered_none else False
@@ -180,56 +173,56 @@ class GeneralisedDisjunction(GeneralisedOperator):
 
 
 class NorOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('↓', l, r)
+    def __init__(self, left, right):
+        super().__init__('↓', left, right)
 
     def op(self, a, b):
         return not (a or b)
 
 
 class ImpliesOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('→', l, r)
+    def __init__(self, left, right):
+        super().__init__('→', left, right)
 
     def op(self, a, b):
         return not a or b
 
 
-class NimpliesOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('↛', l, r)
+class NotImpliesOperator(BinaryOperator):
+    def __init__(self, left, right):
+        super().__init__('↛', left, right)
 
     def op(self, a, b):
         return not (not a or b)
 
 
 class ReverseImpliesOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('←', l, r)
+    def __init__(self, left, right):
+        super().__init__('←', left, right)
 
     def op(self, a, b):
         return a or not b
 
 
-class ReverseNimpliesOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('↚', l, r)
+class ReverseNotImpliesOperator(BinaryOperator):
+    def __init__(self, left, right):
+        super().__init__('↚', left, right)
 
     def op(self, a, b):
         return not (a or not b)
 
 
 class EqualityOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('=', l, r)
+    def __init__(self, left, right):
+        super().__init__('=', left, right)
 
     def op(self, a, b):
         return a == b
 
 
 class NonEqualityOperator(BinaryOperator):
-    def __init__(self, l, r):
-        super().__init__('≠', l, r)
+    def __init__(self, left, right):
+        super().__init__('≠', left, right)
 
     def op(self, a, b):
         return a != b
@@ -245,23 +238,19 @@ class Negation(Operator):
     def get_variables(self):
         return self.data.get_variables()
 
-    def set(self, data):
-        self.data = data
-        return self
-
     def eval(self, symbols):
         return not self.data.eval(symbols)
 
     def eval_const(self):
-        x = self.data.eval_const()
-        return None if x is None else not x
+        ans = self.data.eval_const()
+        return None if ans is None else not ans
 
-    def equals(self, other: 'Formula') -> bool:
+    def equals(self, other: Formula) -> bool:
         return isinstance(other, Negation) and self.data.equals(other.data)
 
     @staticmethod
     def nest(formula: Formula, n: int) -> Formula:
-        """ Nest `n` negations on the given formula """
+        """ Nest `n` negations on the given formula. """
         while n > 0:
             formula = Negation(formula)
             n -= 1
