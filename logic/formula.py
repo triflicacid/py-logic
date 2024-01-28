@@ -22,9 +22,8 @@ class Formula:
         raise NotImplementedError
 
     def simplify(self) -> Formula:
-        """ Simplify the given formula (i.e., resolve 'a + a') """
-        # Please override
-        raise NotImplementedError
+        """ Simplify the given formula (i.e., resolve 'a + a'). Note, does not do any complex re-arranging. """
+        return self
 
     def __eq__(self, other):
         return isinstance(other, Formula) and self.equals(other)

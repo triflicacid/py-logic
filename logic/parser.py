@@ -4,17 +4,17 @@ from logic.literals import Symbol, Top, Bottom
 from logic.formula import Formula
 from logic.operators import AndOperator, NandOperator, NorOperator, OrOperator, ImpliesOperator, \
     ReverseImpliesOperator, EqualityOperator, NonEqualityOperator, ReverseNotImpliesOperator, NotImpliesOperator, \
-    Negation, GeneralisedDisjunction, GeneralisedConjunction
+    Negation, GeneralisedDisjunction, GeneralisedConjunction, BinaryOperator
 
-# Map of binary operators; string => (Operator, Not Variant)
-binary_operators = {
-    '&': (AndOperator, NandOperator),
-    '.': (AndOperator, NandOperator),
-    '|': (OrOperator, NorOperator),
-    '+': (OrOperator, NorOperator),
-    '->': (ImpliesOperator, NotImpliesOperator),
-    '<-': (ReverseImpliesOperator, ReverseNotImpliesOperator),
-    '=': (EqualityOperator, NonEqualityOperator),
+# Map of binary operators; string => operator
+binary_operators: dict[str, type(BinaryOperator)] = {
+    '&': AndOperator,
+    '.': AndOperator,
+    '|': OrOperator,
+    '+': OrOperator,
+    '->': ImpliesOperator,
+    '<-': ReverseImpliesOperator,
+    '=': EqualityOperator,
 }
 
 
@@ -72,8 +72,8 @@ def parse(string: str) -> tuple[bool, Formula | str]:
 
         return True, Negation.nest(literal, negations)
 
-    def parse_operator():
-        """ Parse operator; return class constructor. """
+    def parse_operator() -> type(BinaryOperator) | None:
+        """ Parse operator and return it, or None if no operator found. """
         nonlocal index
 
         negations = parse_negation(1)
@@ -81,9 +81,9 @@ def parse(string: str) -> tuple[bool, Formula | str]:
         for op in binary_operators:
             if string[index:].startswith(op):
                 index += len(op)
-                return binary_operators[op][1 if negations else 0]
+                return binary_operators[op].get_negated() if negations else binary_operators[op]
 
-        return None
+        return None, False
 
     def parse_surrounded_clause(close: str, parse_fn: Callable[[], Any], default=None) -> tuple[bool, Any | str]:
         """ Parse a clause surrounded by `open` and `close`. Note,  open` has already been encountered. """

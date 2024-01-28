@@ -315,9 +315,9 @@ def normal_form(original: Formula,
             i += 1
 
     # Remove empty clauses
-    formula = outer(*outer_formulae)
-    formula.remove_empty_nested()
-    return formula
+    normal_formula = outer(*outer_formulae)
+    normal_formula.remove_empty_nested()
+    return normal_formula
 
 
 def conjunctive_normal_form(formula: Formula):
