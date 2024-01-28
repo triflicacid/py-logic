@@ -3,7 +3,7 @@ import logic.parser as parser
 
 if __name__ == "__main__":
     result_symbol = 'φ'
-    string = "!a = !!b"
+    string = "[a]"
     ok, proposition = parser.parse(string)
 
     if not ok:
@@ -21,12 +21,14 @@ if __name__ == "__main__":
     print("Simplified " + result_symbol + ": " + str(simplified))
     print()
 
-    # cnf = algorithm.conjunctive_normal_form(proposition)
-    # print("CNF " + result_symbol + ": " + str(cnf))
-    # algorithm.print_truth_table(cnf, result_symbol=result_symbol)
-    # print()
-    #
-    # dnf = algorithm.disjunctive_normal_form(proposition)
-    # print("DNF " + result_symbol + ": " + str(dnf))
-    # algorithm.print_truth_table(dnf, result_symbol=result_symbol)
-    # print()
+    cnf = algorithm.conjunctive_normal_form(proposition)
+    print("CNF " + result_symbol + ": " + str(cnf))
+    print("Simplified CNF " + result_symbol + ": " + str(cnf.simplify()))
+    algorithm.print_truth_table(cnf, result_symbol=result_symbol)
+    print()
+
+    dnf = algorithm.disjunctive_normal_form(proposition)
+    print("DNF " + result_symbol + ": " + str(dnf))
+    print("Simplified DNF " + result_symbol + ": " + str(dnf.simplify()))
+    algorithm.print_truth_table(dnf, result_symbol=result_symbol)
+    print()

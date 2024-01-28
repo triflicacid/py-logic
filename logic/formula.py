@@ -23,6 +23,12 @@ class Formula:
 
     def simplify(self) -> Formula:
         """ Simplify the given formula (i.e., resolve 'a + a'). Note, does not do any complex re-arranging. """
+        # Check if constant; that'd be silly
+        value = self.eval_const()
+        if value is not None:
+            from logic.literals import Literal
+            return Literal.from_bool(value)
+
         return self
 
     def __eq__(self, other):
