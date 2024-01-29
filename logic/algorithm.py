@@ -294,6 +294,15 @@ def normal_form(original: Formula,
                 inner_formulae[j] = formula.data.data
                 continue
 
+            # Break up any generalised operators to make them decomposable
+            if isinstance(formula, GeneralisedOperator):
+                inner_formulae[j] = formula.decompose(True)
+                break
+
+            if isinstance(formula, Negation) and isinstance(formula.data, GeneralisedOperator):
+                inner_formulae[j] = Negation(formula.data.decompose(True))
+                break
+
             # alpha formula
             ok, requires_break = process_formula(formula, extract_alpha_formula, alpha_split)
             if ok:

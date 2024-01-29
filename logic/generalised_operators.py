@@ -1,7 +1,7 @@
 from typing import override
 
 from logic.formula import Formula
-from logic.operators import Operator, Negation, AndOperator, OrOperator
+from logic.operators import Operator, Negation, AndOperator, OrOperator, BinaryOperator
 from logic.literals import Literal, Top, Bottom
 
 
@@ -48,6 +48,41 @@ class GeneralisedOperator(Operator, list):
                     continue
 
             i += 1
+
+    def decompose(self, all_generalised=False) -> Formula:
+        """ Decompose to a sequence of binary operators which represent the same thing.
+        `all_generalised` - if True, all generalised operators will be decomposed.
+        Otherwise, only generalised operator of the same type as self. """
+        if len(self) == 0:
+            return Literal.from_bool(self.get_neutral())
+
+        # Decompose recursively, if necessary
+        decompose_class = GeneralisedOperator if all_generalised else self.__class__
+
+        args = []
+        for arg in self:
+            if isinstance(arg, decompose_class):
+                args.append(arg.decompose())
+
+            elif isinstance(arg, Negation) and isinstance(arg.data, decompose_class):
+                args.append(Negation(arg.data.decompose()))
+
+            else:
+                args.append(arg)
+
+        # Are we atomic?
+        if len(args) == 1:
+            return args[0]
+
+        # Get the operator this is the generalised version of
+        op = self.__class__.get_operator()
+
+        # Construct clauses of binary operator
+        clause = op(args[0], args[1])
+        for i in range(2, len(args)):
+            clause = op(clause, args[i])
+
+        return clause
 
     @override
     def simplify(self) -> Formula:

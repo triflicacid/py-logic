@@ -377,15 +377,16 @@ class Negation(Operator):
             if value is None:
                 return simplified
             else:
-                return Top() if value else Bottom()
+                return Literal.from_bool(value)
         else:
             simplified = self.data.simplify()
             value = simplified.eval_const()
 
             if value is None:
-                return Negation(simplified)
+                # Check for last-minute double-negation
+                return simplified.data if isinstance(simplified, Negation) else Negation(simplified)
             else:
-                return Bottom() if value else Top()
+                return Literal.from_bool(not value)
 
     @staticmethod
     def nest(formula: Formula, n: int) -> Formula:
