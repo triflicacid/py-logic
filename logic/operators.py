@@ -9,84 +9,6 @@ class Operator(Formula):
     pass
 
 
-class GeneralisedOperator(Operator):
-    def __init__(self, formulae: list[Formula], open_tag: str, close_tag: str):
-        self.formulae = list(formulae)
-        self.open_tag = open_tag
-        self.close_tag = close_tag
-
-    def __getitem__(self, idx: int):
-        return self.formulae[idx]
-
-    def __setitem__(self, idx: int, value: Formula):
-        self.formulae[idx] = value
-
-    def __len__(self):
-        return len(self.formulae)
-
-    def __str__(self):
-        return self.open_tag + ','.join(map(str, self.formulae)) + self.close_tag
-
-    def append(self, *formula: tuple[Formula]):
-        self.formulae.extend(formula)
-
-    def remove(self, index: int):
-        self.formulae.pop(index)
-
-    @override
-    def get_variables(self):
-        return set().union(*(formula.get_variables() for formula in self.formulae))
-
-    @override
-    def equals(self, other: Formula) -> bool:
-        if not isinstance(other, self.__class__) or len(self.formulae) != len(other.formulae):
-            return False
-
-        for i in range(len(self.formulae)):
-            if not self.formulae[i].equals(other.formulae[i]):
-                return False
-
-        return True
-
-    def remove_empty_nested(self):
-        """ Nested generalised formulae: remove empty formulae """
-        i = 0
-        while i < len(self.formulae):
-            formula = self.formulae[i]
-
-            if isinstance(formula, GeneralisedOperator):
-                formula.remove_empty_nested()
-
-                if len(formula) == 0:
-                    self.formulae.pop(i)
-                    continue
-
-            i += 1
-
-    @override
-    def simplify(self) -> Formula:
-        # Check if constant
-        value = self.eval_const()
-        if value is not None:
-            return Literal.from_bool(value)
-
-        # Simplify all formulae
-        formulae = [formula.simplify() for formula in self.formulae]
-
-        # Atomic?
-        if len(formulae) == 1:
-            return formulae[0]
-
-        simplified = self._simplify(formulae)
-
-        # Pass with simplified arguments, or return fully simplified stub
-        return self.__class__(*formulae) if simplified is None else simplified
-
-    def _simplify(self, formulae: list[Formula]) -> Formula | None:
-        # Please override
-        raise NotImplementedError
-
-
 class BinaryOperator(Operator):
     def __init__(self, symbol: str, left, right):
         super().__init__()
@@ -216,58 +138,6 @@ class NandOperator(BinaryOperator):
     def get_negated():
         return AndOperator
 
-
-class GeneralisedConjunction(GeneralisedOperator):
-    def __init__(self, *formulae):
-        super().__init__(formulae, '⟨', '⟩')
-
-    @override
-    def eval_const(self):
-        encountered_none = False
-
-        for formula in self.formulae:
-            ans = formula.eval_const()
-
-            if ans is None:
-                encountered_none = True
-
-            elif not ans:
-                return False
-
-        return None if encountered_none else True
-
-    @override
-    def eval(self, symbols):
-        for formula in self.formulae:
-            if not formula.eval(symbols):
-                return False
-
-        return True
-
-    @override
-    def _simplify(self, formulae: list[Formula]) -> Formula | None:
-        new_formulae = []
-
-        for formula in formulae:
-            # Remove Top
-            if isinstance(formula, Top):
-                continue
-
-            # Does this instance already exist?
-            if formula in new_formulae:
-                continue
-
-            # Does the negation occur in new_formulae?
-            if any(map(lambda f: (isinstance(f, Negation) and formula.equals(f.data)) or
-                                 (isinstance(formula, Negation) and formula.data.equals(f)), new_formulae)):
-                return Bottom()
-
-            # Preserve element
-            new_formulae.append(formula)
-
-        return GeneralisedConjunction(*new_formulae)
-
-
 class OrOperator(BinaryOperator):
     def __init__(self, left, right):
         super().__init__('∨', left, right)
@@ -301,57 +171,6 @@ class OrOperator(BinaryOperator):
     @staticmethod
     def get_negated():
         return NorOperator
-
-
-class GeneralisedDisjunction(GeneralisedOperator):
-    def __init__(self, *formulae):
-        super().__init__(formulae, '[', ']')
-
-    @override
-    def eval_const(self):
-        encountered_none = False
-
-        for formula in self.formulae:
-            ans = formula.eval_const()
-
-            if ans is None:
-                encountered_none = True
-
-            elif ans:
-                return True
-
-        return None if encountered_none else False
-
-    @override
-    def eval(self, symbols):
-        for formula in self.formulae:
-            if formula.eval(symbols):
-                return True
-
-        return False
-
-    @override
-    def _simplify(self, formulae: list[Formula]) -> Formula | None:
-        new_formulae = []
-
-        for formula in formulae:
-            # Remove Bottom
-            if isinstance(formula, Bottom):
-                continue
-
-            # Does this instance already exist?
-            if formula in new_formulae:
-                continue
-
-            # Does the negation occur in new_formulae?
-            if any(map(lambda f: (isinstance(f, Negation) and formula.equals(f.data)) or
-                                 (isinstance(formula, Negation) and formula.data.equals(f)), new_formulae)):
-                return Top()
-
-            # Preserve element
-            new_formulae.append(formula)
-
-        return GeneralisedDisjunction(*new_formulae)
 
 
 class NorOperator(BinaryOperator):

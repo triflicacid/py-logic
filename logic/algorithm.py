@@ -1,8 +1,8 @@
 from logic.formula import Formula
+from logic.generalised_operators import GeneralisedDisjunction, GeneralisedConjunction, GeneralisedOperator
 from logic.literals import Symbol, Top, Bottom
-from logic.operators import GeneralisedDisjunction, GeneralisedConjunction, Negation, AndOperator, OrOperator, \
-    ImpliesOperator, ReverseImpliesOperator, NandOperator, NorOperator, NotImpliesOperator, ReverseNotImpliesOperator, \
-    NonEqualityOperator, EqualityOperator, BinaryOperator, GeneralisedOperator
+from logic.operators import Negation, AndOperator, OrOperator, ImpliesOperator, ReverseImpliesOperator, NandOperator, \
+    NorOperator, NotImpliesOperator, ReverseNotImpliesOperator, NonEqualityOperator, EqualityOperator
 
 TruthTable = list[(dict[str, bool], bool)]
 
@@ -74,8 +74,8 @@ def print_truth_table(formula: Formula, true_symbol='T', false_symbol='F', resul
 def rank(formula: Formula) -> int:
     """ Determine a formula's rank. """
     # r([x1, x2, ...]) = SUM r(r_i)
-    if isinstance(formula, GeneralisedDisjunction) or isinstance(formula, GeneralisedConjunction):
-        return sum(map(rank, formula.formulae))
+    if isinstance(formula, GeneralisedOperator):
+        return sum(map(rank, formula))
 
     # r(x) = rank(neg x) = 0
     if isinstance(formula, Symbol) or (isinstance(formula, Negation) and isinstance(formula.data, Symbol)):
@@ -102,7 +102,7 @@ def rank(formula: Formula) -> int:
     if b1 is not None:
         return 1 + rank(b1) + rank(b2)
 
-    raise ValueError(formula)
+    raise ValueError
 
 
 def extract_alpha_formula(formula: Formula) -> tuple[Formula | None, Formula | None]:
@@ -202,11 +202,12 @@ def extract_beta_formula(formula: Formula) -> tuple[Formula | None, Formula | No
 def normal_form(original: Formula,
                 inner: type[GeneralisedConjunction | GeneralisedDisjunction],
                 outer: type[GeneralisedConjunction | GeneralisedDisjunction],
-                inner_op: type[BinaryOperator],
                 alpha_split: bool,
                 beta_split: bool) -> GeneralisedOperator:
     """ General normal form method. `inner` and `outer` specify inner/outer generalised groups. `_split` determines
     whether to split on the formula type. `inner_op` is the operator to simply replace with commas. """
+
+    inner_op = inner.get_operator()
 
     def split_formula(parts: list[Formula], outer_index: int, inner_index_skip: int):
         """ Given a list of formulae, create a split in outer_formula. `outer_index` points to the current outer
@@ -229,17 +230,17 @@ def normal_form(original: Formula,
             if isinstance(formula, inner_op):
                 formulae.append(formula.left)
                 formulae.append(formula.right)
-                formulae.remove(inner_index)
+                formulae.pop(inner_index)
 
             # inner generalised: merge into current
             elif isinstance(formula, inner):
-                formulae.append(*formula.formulae)
-                formulae.remove(inner_index)
+                formulae.extend(formula)
+                formulae.pop(inner_index)
 
             # outer generalised: split across
             elif isinstance(formula, outer):
-                split_formula(formula.formulae, outer_index, inner_index)
-                formulae.remove(inner_index)
+                split_formula(formula, outer_index, inner_index)
+                formulae.pop(inner_index)
 
             else:
                 inner_index += 1
@@ -258,7 +259,7 @@ def normal_form(original: Formula,
                 # Add both to current clause, remove old formula
                 inner_formulae.append(p1)
                 inner_formulae.append(p2)
-                inner_formulae.remove(j)
+                inner_formulae.pop(j)
                 prepare_formula(i, len(inner_formulae) - 2)
                 return True, False
 
@@ -321,8 +322,8 @@ def normal_form(original: Formula,
 
 
 def conjunctive_normal_form(formula: Formula):
-    return normal_form(formula, GeneralisedDisjunction, GeneralisedConjunction, OrOperator, True, False)
+    return normal_form(formula, GeneralisedDisjunction, GeneralisedConjunction, True, False)
 
 
 def disjunctive_normal_form(formula: Formula):
-    return normal_form(formula, GeneralisedConjunction, GeneralisedDisjunction, AndOperator, False, True)
+    return normal_form(formula, GeneralisedConjunction, GeneralisedDisjunction, False, True)
