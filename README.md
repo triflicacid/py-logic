@@ -25,8 +25,9 @@ Formulae are in the form: `<lit/group> [[!]<op> <lit/group>]` where
 **Negation**: `!`, `¬`, `~`. Used to negate literals, groups, or operators.
 
 **Binary Connectives**
-- Conjunction (Or): `+`, `|`.
-- Disjunction (And): `.`, `&`.
+- Conjunction (Or): `+`, `|`, `v`.
+- Disjunction (And): `.`, `&`, `^`.
 - Implication: `->`.
-- Equality (Xnor): `=`.
+- Equality: `=`.
+- Xor: `(+)`.
 - Reverse Implication: `<-`.

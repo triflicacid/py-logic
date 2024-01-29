@@ -4,21 +4,24 @@ from logic.formula import Formula
 from logic.generalised_operators import GeneralisedDisjunction, GeneralisedConjunction
 from logic.literals import Symbol, Top, Bottom
 from logic.operators import AndOperator, OrOperator, ImpliesOperator, ReverseImpliesOperator, EqualityOperator, \
-    Negation, BinaryOperator
-
-# Map of binary operators; string => operator
-binary_operators: dict[str, type(BinaryOperator)] = {
-    '&': AndOperator,
-    '.': AndOperator,
-    '|': OrOperator,
-    '+': OrOperator,
-    '->': ImpliesOperator,
-    '<-': ReverseImpliesOperator,
-    '=': EqualityOperator,
-}
+    Negation, BinaryOperator, NonEqualityOperator
 
 
 class Parser:
+    # Map of binary operators; string => operator
+    binary_operators: dict[str, type(BinaryOperator)] = {
+        '&': AndOperator,
+        '.': AndOperator,
+        '^': AndOperator,
+        '|': OrOperator,
+        '+': OrOperator,
+        'v': OrOperator,
+        '->': ImpliesOperator,
+        '<-': ReverseImpliesOperator,
+        '=': EqualityOperator,
+        '(+)': NonEqualityOperator,
+    }
+
     def __init__(self):
         self.index = 0
         self.string = ""
@@ -43,12 +46,12 @@ class Parser:
         """ Parse operator and return it, or None if no operator found. """
         negations = self.parse_negation(1)
 
-        for op in binary_operators:
-            if self.string[self.index:].startswith(op):
-                self.index += len(op)
-                return binary_operators[op].get_negated() if negations else binary_operators[op]
+        for symbol, op in Parser.binary_operators.items():
+            if self.string[self.index:].startswith(symbol):
+                self.index += len(symbol)
+                return op.get_negated() if negations else op
 
-        return None, False
+        return None
 
     def parse_literal(self) -> tuple[bool, Formula | str]:
         """ Parse a literal: top, bottom, symbol. """
