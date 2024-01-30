@@ -137,7 +137,7 @@ class GeneralisedConjunction(GeneralisedOperator):
 
     @override
     def get_neutral(self) -> bool:
-        return False
+        return True
 
     @override
     def eval(self, symbols):
@@ -150,7 +150,6 @@ class GeneralisedConjunction(GeneralisedOperator):
     @override
     def _simplify(self, formulae: list[Formula]) -> Formula | None:
         new_formulae = []
-        found_top = False
 
         for formula in formulae:
             # Remove Top
@@ -169,10 +168,6 @@ class GeneralisedConjunction(GeneralisedOperator):
 
             # Preserve element
             new_formulae.append(formula)
-
-        # If empty, we would default to the neutral element. However, if we found Top...
-        if len(new_formulae) == 0 and found_top:
-            return Top()
 
         return GeneralisedConjunction(*new_formulae)
 
@@ -210,12 +205,11 @@ class GeneralisedDisjunction(GeneralisedOperator):
 
     @override
     def get_neutral(self) -> bool:
-        return True
+        return False
 
     @override
     def _simplify(self, formulae: list[Formula]) -> Formula | None:
         new_formulae = []
-        found_bottom = False
 
         for formula in formulae:
             # Remove Bottom
@@ -234,10 +228,6 @@ class GeneralisedDisjunction(GeneralisedOperator):
 
             # Preserve element
             new_formulae.append(formula)
-
-        # If empty, we would default to the neutral element. However, if Bottom was found...
-        if len(new_formulae) == 0 and found_bottom:
-            return Bottom()
 
         return GeneralisedDisjunction(*new_formulae)
 

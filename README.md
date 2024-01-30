@@ -3,13 +3,14 @@
 A basic logic application in Python
 
 Supports the following:
-- Create basic logic formulae
-- Parse basic logic formulae
-- Create truth tables for formulae
-- Evaluate formulae
+- Create basic logic formulae.
+- Parse basic logic formulae.
+- Create truth tables for formulae.
+- Evaluate formulae.
+- Convert propositions to CNF and DNF.
 
 The following will be implemented:
-- Tautology detection via resolution
+- Tautology detection via resolution and/or simple tableau.
 
 ## Parsing
 Formulae are in the form: `<lit/group> [[!]<op> <lit/group>]` where
