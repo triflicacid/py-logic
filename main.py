@@ -1,7 +1,10 @@
-import logic.algorithm as algorithm
+from logic.algorithm import rank
+from logic.normal_form import NormalForm
 from logic.parser import Parser
+from logic.truth_table import TruthTable
 
 truth_tables = True
+truth_table = TruthTable() if truth_tables else None
 
 if __name__ == "__main__":
     result_symbol = 'φ'
@@ -17,27 +20,36 @@ if __name__ == "__main__":
 
     print(f"{result_symbol}: {proposition}")
     print(f"Const {result_symbol}: {proposition.eval_const()}")
+    print(f"Rank: {rank(proposition)}")
     print(f"Simplified {result_symbol}: {proposition.simplify()}")
     if truth_tables:
-        algorithm.print_truth_table(proposition, result_symbol=result_symbol)
+        truth_table.set_formula(proposition) \
+            .generate() \
+            .print(result_symbol=result_symbol)
     print()
 
     print("----- CNF -----")
-    cnf = algorithm.conjunctive_normal_form(proposition)
+    cnf = NormalForm.conjunctive_normal_form(proposition)
     print(f"{result_symbol}: {cnf}")
+    print(f"Rank: {rank(cnf)}")
     print(f"Simplified {result_symbol}: {(simplified := cnf.simplify())}")
     if hasattr(simplified, 'decompose'):
         print(f"Simplified decomposed {result_symbol}: {simplified.decompose(True)}")
     if truth_tables:
-        algorithm.print_truth_table(cnf, result_symbol=result_symbol)
+        truth_table.set_formula(cnf) \
+            .generate() \
+            .print(result_symbol=result_symbol)
     print()
 
     print("----- DNF -----")
-    dnf = algorithm.disjunctive_normal_form(proposition)
+    dnf = NormalForm.disjunctive_normal_form(proposition)
     print(f"{result_symbol}: {dnf}")
+    print(f"Rank: {rank(dnf)}")
     print(f"Simplified {result_symbol}: {(simplified := dnf.simplify())}")
     if hasattr(simplified, 'decompose'):
         print(f"Simplified decomposed {result_symbol}: {simplified.decompose(True)}")
     if truth_tables:
-        algorithm.print_truth_table(dnf, result_symbol=result_symbol)
+        truth_table.set_formula(dnf) \
+            .generate() \
+            .print(result_symbol=result_symbol)
     print()
