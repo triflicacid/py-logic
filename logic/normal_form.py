@@ -105,7 +105,7 @@ class NormalForm:
         self.prepare_formula(outer_formulae, 0)
 
         # Split alpha formula: alpha formulae involve conjunction, so split if inner is disjunction
-        alpha_split = isinstance(self.inner, GeneralisedDisjunction)
+        alpha_split = self.inner == GeneralisedDisjunction
 
         i = 0
         while i < len(outer_formulae):

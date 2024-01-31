@@ -11,6 +11,11 @@ class Formula:
         # Please override
         raise NotImplementedError
 
+    def substitute(self, symbol: str, formula: Formula) -> Formula:
+        """ Substitude all instances of the given symbol with the formula. """
+        # Please override
+        raise NotImplementedError
+
     def get_variables(self) -> set[str]:
         """ Return set of all variables occurring in this formula """
         # Please override

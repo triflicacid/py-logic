@@ -12,6 +12,9 @@ Supports the following:
 The following will be implemented:
 - Tautology detection via resolution and/or simple tableau.
 
+## CLI
+The file `cli.py` is a basic command-line interface application for testing and demonstrating this library's abilities.
+
 ## Parsing
 Formulae are in the form: `<lit/group> [[!]<op> <lit/group>]` where
 - `<lit>` is a literal: top, bottom, or a symbol. These may be negated.

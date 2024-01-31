@@ -17,7 +17,7 @@ class BinaryOperator(Operator):
         self.right = right
 
     @override
-    def eval(self, symbols):
+    def eval(self, symbols: dict[str, bool]):
         return self.op(self.left.eval(symbols), self.right.eval(symbols))
 
     @override
@@ -42,6 +42,10 @@ class BinaryOperator(Operator):
         # left=T/F, right=None
         eval_true, eval_false = self.op(left, True), self.op(left, False)
         return eval_true if eval_true == eval_false else None
+
+    @override
+    def substitute(self, symbol: str, formula: Formula) -> Formula:
+        return self.__class__(self.left.substitute(symbol, formula), self.right.substitute(symbol, formula))
 
     def __str__(self):
         return f"({self.left} {self.symbol} {self.right})"
@@ -355,13 +359,17 @@ class Negation(Operator):
         return self.data.get_variables()
 
     @override
-    def eval(self, symbols):
+    def eval(self, symbols: dict[str, bool]):
         return not self.data.eval(symbols)
 
     @override
     def eval_const(self):
         ans = self.data.eval_const()
         return None if ans is None else not ans
+
+    @override
+    def substitute(self, symbol: str, formula: Formula) -> Formula:
+        return Negation(self.data.substitute(symbol, formula))
 
     @override
     def equals(self, other: Formula) -> bool:

@@ -8,7 +8,7 @@ truth_table = TruthTable() if truth_tables else None
 
 if __name__ == "__main__":
     result_symbol = 'φ'
-    string = "[a,b,![a, b]]"
+    string = "(a . b) + (!a . !b)"
     parser = Parser()
     ok, proposition = parser.parse(string)
 

@@ -37,6 +37,10 @@ class Top(Literal):
     def equals(self, other: Formula) -> bool:
         return isinstance(other, Top)
 
+    @override
+    def substitute(self, symbol: str, formula: Formula) -> Formula:
+        return self
+
 
 class Bottom(Literal):
     symbol = '⊥'
@@ -62,6 +66,10 @@ class Bottom(Literal):
     @override
     def equals(self, other: Formula) -> bool:
         return isinstance(other, Bottom)
+
+    @override
+    def substitute(self, symbol: str, formula: Formula) -> Formula:
+        return self
 
 
 class Symbol(Literal):
@@ -95,6 +103,10 @@ class Symbol(Literal):
 
         symbols[self.symbol] = value
         return value
+
+    @override
+    def substitute(self, symbol: str, formula: Formula) -> Formula:
+        return formula if self.symbol == symbol else self
 
     @override
     def get_variables(self):

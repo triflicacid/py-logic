@@ -85,6 +85,10 @@ class GeneralisedOperator(Operator, list):
         return clause
 
     @override
+    def substitute(self, symbol: str, formula: Formula) -> Formula:
+        return self.__class__(*[el.substitute(symbol, formula) for el in self])
+
+    @override
     def simplify(self) -> Formula:
         # Check if constant
         value = self.eval_const()
